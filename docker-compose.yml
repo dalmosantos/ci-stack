@@ -1,0 +1,150 @@
+version: '3'
+
+services:
+
+  nexus:
+    image: sonatype/nexus3
+    container_name: nexus
+    #volumes:
+    #  - "nexus-data:/nexus-data"
+    ports:
+      - "8081:8081"
+    networks:
+      - prodnetwork
+
+  
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    ports:
+      - "8080:8080"
+    networks:
+      - prodnetwork
+    restart: on-failure
+   # volumes:
+    #  - jenkins_home:/var/jenkins_home
+    links:
+      - nexus
+      - gitlab
+      - sonarqube
+      - selhub:hub
+  
+  sonarqube:
+    image: sonarqube:lts
+    container_name: sonarqube
+    ports:
+      - "9000:9000"
+    networks:
+      - prodnetwork
+    environment:
+      - SONARQUBE_JDBC_URL=jdbc:postgresql://sonardb:5432/sonar
+      - SONAR_USER=sonar
+      - SONAR_PASSWORD=sonar
+      - SONAR_NAME=sonar
+    depends_on:
+      - sonardb
+
+   # volumes:
+    #  - sonarqube_conf:/opt/sonarqube/conf
+     # - sonarqube_data:/opt/sonarqube/data
+     # - sonarqube_extensions:/opt/sonarqube/extensions
+     # - sonarqube_bundled-plugins:/opt/sonarqube/lib/bundled-plugins
+
+  sonardb:
+    image: postgres:9-alpine
+    container_name: sonardb
+    ports:
+      - "5432:5432"
+    networks:
+      - prodnetwork
+    environment:
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=sonar
+    #volumes:
+    #  - postgresql:var/lib/postgresql
+      # This needs explicit mapping due to https://github.com/docker-library/postgres/blob/4e48e3228a30763913ece952c611e5e9b95c8759/Dockerfile.template#L52
+    #  - postgresql_data:/var/lib/postgresql/dat
+  
+  selhub:
+    image: selenium/hub
+    container_name: selenium
+    networks:
+      - prodnetwork
+    ports:
+      - 4444:4444
+  
+  nodeff:
+    image: selenium/node-firefox-debug
+    container_name: node_ff
+    networks:
+      - prodnetwork
+    ports:
+      - 5900
+    links:
+      - selhub:hub
+  
+  nodechrome:
+    image: selenium/node-chrome-debug
+    container_name: node_chrome
+    networks:
+      - prodnetwork
+    ports:
+      - 5900
+    links:
+      - selhub:hub
+  
+  gitlabdb:
+    image: postgres:9-alpine
+    container_name: gitlabdb
+    ports:
+      - "5433:5433"
+    environment:
+      - GITLABDB_USER=gitlab
+      - GITLABDB_PASSWORD=gitlab
+      - GITLABDB_NAME=gitlab
+    #volumes:
+    #  - postgresql:/var/lib/postgresql
+      # This needs explicit mapping due to https://github.com/docker-library/postgres/blob/4e48e3228a30763913ece952c611e5e9b95c8759/Dockerfile.template#L52
+    #  - postgresql_data:/var/lib/postgresql/dat
+
+  gitlab:
+    image: gitlab/gitlab-ce
+    container_name: gitlab
+    ports:
+      - "443:9443"
+      - "80:80"
+      - "29418:29418"
+    networks:
+      - prodnetwork
+    restart: always
+    #volumes:
+    #  - /srv/gitlab/config:/etc/gitlab
+    #  - /srv/gitlab/logs:/var/log/gitlab
+    #  - /srv/gitlab/data:/var/opt/gitlab
+    links:
+      #- jenkins
+      #- redis
+      - gitlabdb
+
+  owaspZAP:
+    image: owasp/zap2docker-stable
+    container_name: owaspzap
+    networks:
+      - prodnetwork
+    ports:
+      - "9090:9090"
+      - "8090:8090"
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - prodnetwork
+#    volumes:
+#      - /srv/docker/gitlab/redis:/var/lib/redis
+
+networks:
+  prodnetwork:
+    driver: bridge
