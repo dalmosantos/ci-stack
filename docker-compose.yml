@@ -80,8 +80,8 @@ services:
       - prodnetwork
     ports:
       - 5900
-    links:
-      - selhub:hub
+    depends_on:
+      - sellhub
   
   nodechrome:
     image: selenium/node-chrome-debug
@@ -90,8 +90,8 @@ services:
       - prodnetwork
     ports:
       - 5900
-    links:
-      - selhub:hub
+    depends_on:
+      - sellhub
   
   gitlabdb:
     image: postgres:9-alpine
