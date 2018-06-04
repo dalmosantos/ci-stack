@@ -14,7 +14,7 @@ services:
 
   
   jenkins:
-    image: jenkins/jenkins:lts
+    image: jenkins/jenkins:lts-slim
     container_name: jenkins
     ports:
       - "8080:8080"
@@ -30,7 +30,7 @@ services:
       - selhub:hub
   
   sonarqube:
-    image: sonarqube:lts
+    image: sonarqube:lts-alpine
     container_name: sonarqube
     ports:
       - "9000:9000"
