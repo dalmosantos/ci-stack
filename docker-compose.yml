@@ -135,13 +135,13 @@ services:
       - "9090:9090"
       - "8090:8090"
 
-  redis:
-    image: redis:alpine
-    container_name: redis
-    ports:
-      - "6379:6379"
-    networks:
-      - prodnetwork
+#  redis:
+#    image: redis:alpine
+#    container_name: redis
+#    ports:
+#      - "6379:6379"
+#    networks:
+#      - prodnetwork
 #    volumes:
 #      - /srv/docker/gitlab/redis:/var/lib/redis
 
